@@ -123,7 +123,7 @@ function Test-SqlConnection
                 {
                     $result = [PSCustomObject] @{
                         PSTypeName       = 'SqlServerFever.TestConnectionResult'
-                        ConnectionString = $connectionStringProtected
+                        ConnectionString = $connectionStringDisplay
                         Id               = $sqlReaderSession[0]
                         Login            = $sqlReaderSession[1]
                         User             = $sqlReaderSession[2]
