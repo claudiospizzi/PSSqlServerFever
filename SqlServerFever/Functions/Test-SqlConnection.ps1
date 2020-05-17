@@ -34,6 +34,8 @@
 function Test-SqlConnection
 {
     [CmdletBinding()]
+    [OutputType([System.Boolean])]
+    [OutputType([System.Management.Automation.PSCustomObject])]
     param
     (
         # SQL instance name.
@@ -62,13 +64,15 @@ function Test-SqlConnection
         [Switch]
         $Encrypt,
 
-        # Option to specify a test query on the selected database.
+        # Option to return only true or false.
         [Parameter(Mandatory = $false)]
-        [System.String]
-        $Query
+        [Switch]
+        $Quiet
     )
 
-    # Default connection string with target server and database
+    $ErrorActionPreference = 'Stop'
+
+    # Default connection string with target server and database.
     $connectionString = 'Data Source={0}; Initial Catalog={1}' -f $SqlInstance, $Database
 
     # Depending on the credential parameter, append the user id and password or
@@ -88,7 +92,7 @@ function Test-SqlConnection
         $connectionString += '; Encrypt=true'
     }
 
-    # Remove the passwort on the verbose output
+    # Remove the passwort on the verbose output.
     $connectionStringDisplay = $connectionString
     if ($PSBoundParameters.ContainsKey('SqlCredential'))
     {
@@ -97,6 +101,8 @@ function Test-SqlConnection
 
     Write-Verbose "SQL Connection String: $connectionStringDisplay"
 
+    $result = $null
+
     try
     {
         $sqlConnection = New-Object -TypeName 'System.Data.SqlClient.SqlConnection' -ArgumentList $connectionString
@@ -104,61 +110,82 @@ function Test-SqlConnection
 
         try
         {
-            $sqlCommand = New-Object -TypeName 'System.Data.SqlClient.SqlCommand' -ArgumentList "SELECT @@SPID, SYSTEM_USER, USER, (SELECT auth_scheme FROM sys.dm_exec_connections WHERE session_id = @@SPID), (SELECT encrypt_option FROM sys.dm_exec_connections WHERE session_id = @@SPID), @@SERVERNAME, @@SERVICENAME, @@VERSION, (SELECT create_date FROM sys.databases WHERE name = 'tempdb')", $sqlConnection
-            $sqlReader = $sqlCommand.ExecuteReader()
+            $sqlCommandSession = New-Object -TypeName 'System.Data.SqlClient.SqlCommand' -ArgumentList "SELECT @@SPID, SYSTEM_USER, USER, @@SERVERNAME, @@SERVICENAME, @@VERSION, (SELECT create_date FROM sys.databases WHERE name = 'tempdb')", $sqlConnection
+            $sqlReaderSession = $sqlCommandSession.ExecuteReader()
 
-            while ($sqlReader.Read())
+            if ($sqlReaderSession.Read())
             {
-                [PSCustomObject] @{
-                    PSTypeName       = 'SqlServerFever.TestConnectionResult'
-                    ConnectionString = $connectionStringProtected
-                    Id               = $sqlReader[0]
-                    Login            = $sqlReader[1]
-                    User             = $sqlReader[2]
-                    Protocol         = $sqlReader[3]
-                    Encryption       = $sqlReader[4]
-                    Server           = $sqlReader[5]
-                    Instance         = $sqlReader[6]
-                    Version          = ($sqlReader[7] -as [System.String]).Split("`n")[0]
-                    StartDate        = $sqlReader[8]
-                    Uptime           = [System.DateTime]::Now - $sqlReader[8]
+                if ($Quiet.IsPresent)
+                {
+                    return $true
                 }
+                else
+                {
+                    $result = [PSCustomObject] @{
+                        PSTypeName       = 'SqlServerFever.TestConnectionResult'
+                        ConnectionString = $connectionStringProtected
+                        Id               = $sqlReaderSession[0]
+                        Login            = $sqlReaderSession[1]
+                        User             = $sqlReaderSession[2]
+                        Protocol         = ''
+                        Encryption       = ''
+                        Server           = $sqlReaderSession[3]
+                        Instance         = $sqlReaderSession[4]
+                        Version          = ($sqlReaderSession[5] -as [System.String]).Split("`n")[0]
+                        StartDate        = $sqlReaderSession[6]
+                        Uptime           = [System.DateTime]::Now - $sqlReaderSession[6]
+                    }
+                }
+            }
+        }
+        catch
+        {
+            if (-not $Quiet.IsPresent)
+            {
+                throw $_
             }
         }
         finally
         {
-            if ($null -ne $sqlReader)
+            if ($null -ne $sqlReaderSession)
             {
-                $sqlReader.Close()
-                $sqlReader.Dispose()
+                $sqlReaderSession.Close()
+                $sqlReaderSession.Dispose()
             }
         }
 
-        if ($PSBoundParameters.ContainsKey('Query'))
+        if (-not $Quiet.IsPresent)
         {
             try
             {
-                $sqlCommand = New-Object -TypeName 'System.Data.SqlClient.SqlCommand' -ArgumentList $Query, $sqlConnection
-                $sqlReader = $sqlCommand.ExecuteReader()
+                $sqlCommandConnection = New-Object -TypeName 'System.Data.SqlClient.SqlCommand' -ArgumentList "SELECT auth_scheme, encrypt_option FROM sys.dm_exec_connections WHERE session_id = @@SPID", $sqlConnection
+                $sqlReaderConnection = $sqlCommandConnection.ExecuteReader()
 
-                while ($sqlReader.Read())
+                if ($sqlReaderConnection.Read())
                 {
-                    $objectHashtable = [Ordered] @{}
-                    for ($i = 0; $i -lt $sqlReader.FieldCount; $i++)
-                    {
-                        $objectHashtable["Field$i"] = $sqlReader[$i]
-                    }
-                    [PSCustomObject] $objectHashtable
+                    $result.Protocol   = $sqlReaderConnection[0]
+                    $result.Encryption = $sqlReaderConnection[1]
                 }
+            }
+            catch
+            {
+                Write-Warning "Error occured while getting connection information: $_"
             }
             finally
             {
-                if ($null -ne $sqlReader)
+                if ($null -ne $sqlReaderConnection)
                 {
-                    $sqlReader.Close()
-                    $sqlReader.Dispose()
+                    $sqlReaderConnection.Close()
+                    $sqlReaderConnection.Dispose()
                 }
             }
+        }
+    }
+    catch
+    {
+        if (-not $Quiet.IsPresent)
+        {
+            throw $_
         }
     }
     finally
@@ -168,5 +195,14 @@ function Test-SqlConnection
             $sqlConnection.Close()
             $sqlConnection.Dispose()
         }
+    }
+
+    if ($Quiet.ISPresent)
+    {
+        return $false
+    }
+    elseif ($null -ne $result)
+    {
+        return $result
     }
 }
