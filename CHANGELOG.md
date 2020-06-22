@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+* Added: Add edition to the Test-SqlConnection command
 * Fixed: Connection string not in result object
+* Fixed: Prevent the password leaking in an exception message
 
 ## 0.2.0 - 2020-05-17
 

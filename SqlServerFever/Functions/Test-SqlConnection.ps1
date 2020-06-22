@@ -45,6 +45,7 @@ function Test-SqlConnection
 
         # SQL Login. If not specified, use integrated security.
         [Parameter(Mandatory = $false)]
+        [ValidateNotNull()]
         [System.Management.Automation.PSCredential]
         $SqlCredential,
 
@@ -73,44 +74,41 @@ function Test-SqlConnection
     $ErrorActionPreference = 'Stop'
 
     # Default connection string with target server and database.
-    $connectionString = 'Data Source={0}; Initial Catalog={1}' -f $SqlInstance, $Database
+    $connectionStringReal = 'Data Source={0}; Initial Catalog={1}' -f $SqlInstance, $Database
+    $connectionStringInfo = $connectionStringReal
 
     # Depending on the credential parameter, append the user id and password or
     # the integrated security note.
     if ($PSBoundParameters.ContainsKey('SqlCredential'))
     {
-        $connectionString += '; User ID={0}; Password={1}' -f $SqlCredential.UserName, $SqlCredential.GetNetworkCredential().Password
+        $connectionStringReal += '; User ID={0}; Password={1}' -f $SqlCredential.UserName, $SqlCredential.GetNetworkCredential().Password
+        $connectionStringInfo += '; User ID={0}; Password=***' -f $SqlCredential.UserName
     }
     else
     {
-        $connectionString += '; Integrated Security=true'
+        $connectionStringReal += '; Integrated Security=true'
+        $connectionStringInfo += '; Integrated Security=true'
     }
 
     # Finally, force an encrypted connection.
     if ($Encrypt.IsPresent)
     {
-        $connectionString += '; Encrypt=true'
+        $connectionStringReal += '; Encrypt=true'
+        $connectionStringInfo += '; Encrypt=true'
     }
 
-    # Remove the passwort on the verbose output.
-    $connectionStringDisplay = $connectionString
-    if ($PSBoundParameters.ContainsKey('SqlCredential'))
-    {
-        $connectionStringDisplay = $connectionString -replace ($SqlCredential.GetNetworkCredential().Password -as [System.String]), '***'
-    }
-
-    Write-Verbose "SQL Connection String: $connectionStringDisplay"
+    Write-Verbose "SQL Connection String: $connectionStringInfo"
 
     $result = $null
 
     try
     {
-        $sqlConnection = New-Object -TypeName 'System.Data.SqlClient.SqlConnection' -ArgumentList $connectionString
+        $sqlConnection = New-Object -TypeName 'System.Data.SqlClient.SqlConnection' -ArgumentList $connectionStringReal
         $sqlConnection.Open()
 
         try
         {
-            $sqlCommandSession = New-Object -TypeName 'System.Data.SqlClient.SqlCommand' -ArgumentList "SELECT @@SPID, SYSTEM_USER, USER, @@SERVERNAME, @@SERVICENAME, @@VERSION, (SELECT create_date FROM sys.databases WHERE name = 'tempdb')", $sqlConnection
+            $sqlCommandSession = New-Object -TypeName 'System.Data.SqlClient.SqlCommand' -ArgumentList "SELECT @@SPID, SYSTEM_USER, USER, @@SERVERNAME, @@SERVICENAME, @@VERSION, SERVERPROPERTY('Edition'), (SELECT create_date FROM sys.databases WHERE name = 'tempdb')", $sqlConnection
             $sqlReaderSession = $sqlCommandSession.ExecuteReader()
 
             if ($sqlReaderSession.Read())
@@ -123,7 +121,7 @@ function Test-SqlConnection
                 {
                     $result = [PSCustomObject] @{
                         PSTypeName       = 'SqlServerFever.TestConnectionResult'
-                        ConnectionString = $connectionStringDisplay
+                        ConnectionString = $connectionStringInfo
                         Id               = $sqlReaderSession[0]
                         Login            = $sqlReaderSession[1]
                         User             = $sqlReaderSession[2]
@@ -132,8 +130,9 @@ function Test-SqlConnection
                         Server           = $sqlReaderSession[3]
                         Instance         = $sqlReaderSession[4]
                         Version          = ($sqlReaderSession[5] -as [System.String]).Split("`n")[0]
-                        StartDate        = $sqlReaderSession[6]
-                        Uptime           = [System.DateTime]::Now - $sqlReaderSession[6]
+                        Edition          = $sqlReaderSession[6]
+                        StartDate        = $sqlReaderSession[7]
+                        Uptime           = [System.DateTime]::Now - $sqlReaderSession[7]
                     }
                 }
             }
