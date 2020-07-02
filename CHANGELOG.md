@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
+* Added: New command to invoke a database copy
 * Added: Add edition to the Test-SqlConnection command
 * Fixed: Connection string not in result object
 * Fixed: Prevent the password leaking in an exception message
