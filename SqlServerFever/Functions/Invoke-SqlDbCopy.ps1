@@ -46,8 +46,6 @@ function Invoke-SqlDbCopy
         $DestinationDatabaseName
     )
 
-    $ErrorActionPreference = 'Stop'
-
     # Define and verify the connection splat to the source SQL Server.
     $sqlSource = @{
         SqlInstance = $SourceSqlInstance

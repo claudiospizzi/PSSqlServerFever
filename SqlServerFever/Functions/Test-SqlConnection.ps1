@@ -74,8 +74,6 @@ function Test-SqlConnection
         $Quiet
     )
 
-    $ErrorActionPreference = 'Stop'
-
     # Default connection string with target server and database.
     $connectionStringReal = 'Data Source={0}; Initial Catalog={1}' -f $SqlInstance, $Database
     $connectionStringInfo = $connectionStringReal
