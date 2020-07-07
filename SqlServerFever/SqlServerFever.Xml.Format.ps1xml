@@ -2,5 +2,57 @@
 <Configuration>
   <ViewDefinitions>
 
+    <View>
+      <Name>SqlServerFever.DatabaseTransactionLogState</Name>
+      <ViewSelectedBy>
+        <TypeName>SqlServerFever.DatabaseTransactionLogState</TypeName>
+      </ViewSelectedBy>
+      <TableControl>
+        <TableHeaders>
+          <TableColumnHeader>
+            <Label>SqlInstance</Label>
+            <Width>32</Width>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>Database</Label>
+            <Width>24</Width>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>LogFile</Label>
+            <Width>24</Width>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>FileSize</Label>
+            <Width>16</Width>
+          </TableColumnHeader>
+          <TableColumnHeader>
+            <Label>VlfCount</Label>
+            <Width>8</Width>
+          </TableColumnHeader>
+        </TableHeaders>
+        <TableRowEntries>
+          <TableRowEntry>
+            <TableColumnItems>
+              <TableColumnItem>
+                <PropertyName>SqlInstance</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>Database</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>LogFile</PropertyName>
+              </TableColumnItem>
+              <TableColumnItem>
+                <ScriptBlock>'{0:0.00} MB' -f ($_.FileSize / 1MB)</ScriptBlock>
+              </TableColumnItem>
+              <TableColumnItem>
+                <PropertyName>VlfCount</PropertyName>
+              </TableColumnItem>
+            </TableColumnItems>
+          </TableRowEntry>
+        </TableRowEntries>
+      </TableControl>
+    </View>
+
   </ViewDefinitions>
 </Configuration>
