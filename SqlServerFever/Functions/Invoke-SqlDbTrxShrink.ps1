@@ -78,7 +78,7 @@ function Invoke-SqlDbTrxShrink
     $state = Get-SqlDbTrxLogState @sqlConnection
     Write-Output $state
 
-    while ($state.FileSize -lt $TargetSize -and $state.VlfCount -le 8 -and $PSCmdlet.ShouldProcess($state.LogFile, $queryShrink))
+    while (($state.FileSize -gt $TargetSize -or $state.VlfCount -gt 8) -and ($Auto.IsPresent -or $PSCmdlet.ShouldProcess($state.LogFile, $queryShrink)))
     {
         Write-Verbose 'SQL TRX SHRINK: Invoke database transaction log backup'
         Invoke-DbaQuery @sqlConnection -Query $queryBackup | Out-Null
@@ -91,7 +91,7 @@ function Invoke-SqlDbTrxShrink
         Write-Output $state
     }
 
-    if ($state.FileSize -lt $TargetSize -and $PSCmdlet.ShouldProcess($state.Logfile, $queryResize))
+    if ($state.FileSize -lt $TargetSize -and ($Auto.IsPresent -or $PSCmdlet.ShouldProcess($state.Logfile, $queryResize)))
     {
         Write-Verbose 'SQL TRX SHRINK: Set database transaction log to target size'
         Invoke-DbaQuery @sqlConnection -Query $queryResize
