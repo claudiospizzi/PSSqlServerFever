@@ -97,7 +97,7 @@ function Invoke-SqlDbTrxShrink
         Invoke-DbaQuery @sqlConnection -Query $queryResize
 
         # Get and show the transaction log state
-        $state = Get-SqlDbTrxLogState @sqlyConnection
+        $state = Get-SqlDbTrxLogState @sqlConnection
         Write-Output $state
     }
 }
