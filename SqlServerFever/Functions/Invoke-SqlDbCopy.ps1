@@ -87,7 +87,7 @@ function Invoke-SqlDbCopy
         throw "Last full backup to disk not found for database '$SourceDatabaseName' on SQL Server '$SourceSqlInstance'."
     }
 
-    if ($PSCmdlet.ShouldProcess("SQL Se1rver $DestinationSqlInstance", "Restore Database $DestinationDatabaseName"))
+    if ($PSCmdlet.ShouldProcess("SQL Server $DestinationSqlInstance", "Restore Database $DestinationDatabaseName"))
     {
         Write-Verbose "SQL DB COPY: Restore database '$DestinationDatabaseName' to SQL Server '$DestinationSqlInstance' from path '$($backup.Path)'."
 
