@@ -14,9 +14,8 @@ jobs:
       - name: Install and cache PowerShell modules
         uses: potatoqualitee/psmodulecache@v5.2
         with:
-          modules-to-cache: InvokeBuild:5.10.1, InvokeBuildHelper:3.1.0, PSScriptAnalyzer:1.21.0
+          modules-to-cache: InvokeBuild::5.10.1, InvokeBuildHelper:3.1.0, PSScriptAnalyzer:1.21.0
       - name: Test PowerShell module
         shell: pwsh
         run: |
-          Import-Module 'InvokeBuild', 'InvokeBuildHelper'
-          Invoke-BuildIsolated -Task 'Test'
+          Invoke-Build -Task 'Test'
