@@ -28,4 +28,5 @@ jobs:
       - name: Test the PowerShell module
         shell: pwsh
         run: |
+          get-module -list | out-string | write-host
           Invoke-BuildIsolated -Task 'Test'
