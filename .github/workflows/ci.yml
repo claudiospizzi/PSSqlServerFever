@@ -11,22 +11,11 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      - name: Setup PowerShell module cache
-        id: cache
-        uses: actions/cache@v3
+      - name: Install and cache PowerShell modules
+        uses: potatoqualitee/psmodulecache@v5.2
         with:
-          path: C:\Users\runneradmin\Documents\PowerShell\Modules\*
-          key: ${{ runner.os }}_InvokeBuild-5.10.1_InvokeBuildHelper-3.1.0_PSScriptAnalyzer-1.21.0
-      - name: Install required PowerShell modules
-        if: steps.cache.outputs.cache-hit != 'true'
+          modules-to-cache: InvokeBuild:5.10.1, InvokeBuildHelper:3.1.0, PSScriptAnalyzer:1.21.0
+      - name: Test PowerShell module
         shell: pwsh
         run: |
-          Set-PSRepository -Name 'PSGallery' -InstallationPolicy 'Trusted'
-          Install-Module -Name 'InvokeBuild' -RequiredVersion '5.10.1' -Scope 'CurrentUser' -ErrorAction 'Stop' -Force
-          Install-Module -Name 'InvokeBuildHelper' -RequiredVersion '3.1.0' -Scope 'CurrentUser' -ErrorAction 'Stop' -Force
-          Install-Module -Name 'PSScriptAnalyzer' -RequiredVersion '1.21.0' -Scope 'CurrentUser' -ErrorAction 'Stop' -Force
-      - name: Test the PowerShell module
-        shell: pwsh
-        run: |
-          get-module -list | out-string | write-host
           Invoke-BuildIsolated -Task 'Test'
