@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  test:
     runs-on: windows-latest
     steps:
       - name: Check out repository code
@@ -22,9 +22,9 @@ jobs:
         shell: pwsh
         run: |
           Set-PSRepository -Name 'PSGallery' -InstallationPolicy 'Trusted'
-          Install-Module -Name 'InvokeBuild' -RequiredVersion '5.10.1' -Scope 'CurrentUser' -ErrorAction 'Stop'
-          Install-Module -Name 'InvokeBuildHelper' -RequiredVersion '3.1.0' -Scope 'CurrentUser' -ErrorAction 'Stop'
-          Install-Module -Name 'PSScriptAnalyzer' -RequiredVersion '1.21.0' -Scope 'CurrentUser' -ErrorAction 'Stop'
+          Install-Module -Name 'InvokeBuild' -RequiredVersion '5.10.1' -Scope 'CurrentUser' -ErrorAction 'Stop' -Force
+          Install-Module -Name 'InvokeBuildHelper' -RequiredVersion '3.1.0' -Scope 'CurrentUser' -ErrorAction 'Stop' -Force
+          Install-Module -Name 'PSScriptAnalyzer' -RequiredVersion '1.21.0' -Scope 'CurrentUser' -ErrorAction 'Stop' -Force
       - name: Test the PowerShell module
         shell: pwsh
         run: |
