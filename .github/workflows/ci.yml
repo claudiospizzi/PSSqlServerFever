@@ -18,4 +18,5 @@ jobs:
       - name: Test PowerShell module
         shell: pwsh
         run: |
+          Import-Module 'InvokeBuild', 'InvokeBuildHelper'
           Invoke-BuildIsolated -Task 'Test'
