@@ -1,4 +1,4 @@
-name: configuration
+name: CI
 
 on:
   push:
@@ -6,7 +6,8 @@ on:
       - main
 
 jobs:
-  Windows:
+  windows-powershell-legacy:
+    name: Windows PowerShell 5.1
     runs-on: windows-latest
     steps:
       - name: Check out repository code
@@ -14,19 +15,20 @@ jobs:
       - name: Install and cache PowerShell modules
         uses: potatoqualitee/psmodulecache@v5.2
         with:
+          shell: powershell
           modules-to-cache: Pester:5.3.3, PSScriptAnalyzer:1.21.0, SecurityFever:2.8.1, InvokeBuild:5.10.1, InvokeBuildHelper:3.1.0
       - name: Run PowerShell module Schema tests
-        shell: pwsh
+        shell: powershell
         run: |
           $Global:VerbosePreference = 'Continue'
           Invoke-Build -Task 'SchemaTest'
       - name: Run PowerShell module Unit tests
-        shell: pwsh
+        shell: powershell
         run: |
           $Global:VerbosePreference = 'Continue'
           Invoke-Build -Task 'UnitTest'
       - name: Run PowerShell module Analyzer tests
-        shell: pwsh
+        shell: powershell
         run: |
           $Global:VerbosePreference = 'Continue'
           Invoke-Build -Task 'AnalyzerTest'
